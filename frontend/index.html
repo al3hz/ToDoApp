@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>¡Listas De Tareas! :D</title>
+  <style>
+    @import url("https://fonts.googleapis.com/css2?family=Manjari:wght@700&display=swap");
+  </style>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css" />
+  <script src="https://unpkg.com/scrollreveal"></script>
+
+  <link rel="stylesheet" href="css/main.css" />
+</head>
+<header>
+  <h1 class="headline">¡Listas De Tareas! :D</h1>
+  <form id="nueva-tarea-form">
+    <input type="text" id="nueva-tarea-input" placeholder="¿Qué tienes planeado?" />
+    <input type="button" id="nueva-tarea-submit" value="Agregar tarea" onclick="insertar()" />
+  </form>
+</header>
+<main>
+  <section class="listas-tareas">
+    <h2>Tareas</h2>
+    <div id="tareas">
+      <!--<div class="tareas">
+            <div class="content">
+              <input type="text" class="text" value="Tarea 0" readonly />
+            </div>
+            <div class="acciones">
+              <button class="editar">Editar</button>
+              <button class="eliminar">Eliminar</button>
+            </div>
+          </div>-->
+    </div>
+  </section>
+</main>
+<script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+<script>
+  ScrollReveal().reveal('.headline');
+
+  function insertar() {
+    const inputValor = document.getElementById("nueva-tarea-input").value
+
+    const payload = {
+      tarea: inputValor
+    }
+
+    axios.post('http://localhost:2003/insertar', payload)
+      .then(function (response) {
+        obtenerListado()
+      })
+      .catch(function (error) {
+        alert("No se pudo añadir la tarea.")
+      });
+  }
+
+  function obtenerListado() {
+    const listasDeTareas = document.getElementById('tareas')
+    listasDeTareas.innerHTML = null
+    axios.get('http://localhost:2003/listado')
+      .then(function (response) {
+        renderizarElementos(response.data)
+      })
+      .catch(function (error) {
+        alert("no se pudo obtener el listado")
+        console.log(error)
+      });
+  }
+
+  function eliminar(id) {
+    axios.delete(`http://localhost:2003/listado/${id}`)
+    .then(function(response){
+      obtenerListado()
+      swal("¡Eliminado!", "La tarea a sido elimanada.", "success");
+    })
+    .catch(function (error) {
+        alert("no se pudo eliminar")
+        console.log(error)
+      });
+  }
+
+  window.onload = () => {
+    obtenerListado()
+  }
+
+  function renderizarElementos(datos) {
+    const divTareas = document.getElementById("tareas")
+    datos.forEach(dato => {
+
+      const tareas_el = document.createElement("div");
+      tareas_el.classList.add("tareas");
+
+      const tareas_content_el = document.createElement("div");
+      tareas_content_el.classList.add("content");
+      tareas_content_el.innerText = dato.dato
+
+      tareas_el.appendChild(tareas_content_el);
+
+      const tareas_actions_el = document.createElement("div");
+      tareas_actions_el.classList.add("acciones");
+
+
+      const tareas_delete_el = document.createElement("button");
+      tareas_delete_el.classList.add("eliminar");
+      tareas_delete_el.innerHTML = "Eliminar";
+      tareas_delete_el.onclick = () => {
+        eliminar(dato.id)
+        
+      }
+
+      tareas_actions_el.appendChild(tareas_delete_el);
+
+      tareas_el.appendChild(tareas_actions_el);
+
+      divTareas.appendChild(tareas_el);
+
+    });
+  }
+</script>
+</body>
+
+</html>
